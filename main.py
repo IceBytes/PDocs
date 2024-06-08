@@ -49,7 +49,7 @@ def create_doc():
             zip_filename = os.path.join('uploads', zip_file.filename)
             zip_file.save(zip_filename)
 
-            extract_dir = os.path.join('uploads', f"{lib_name}_temp")
+            extract_dir = os.path.join('', f"{lib_name}_temp")
             os.makedirs(extract_dir, exist_ok=True)
 
             with ZipFile(zip_filename, 'r') as zip_ref:
