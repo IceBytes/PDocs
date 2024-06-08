@@ -201,17 +201,13 @@
         <div class="menu" onclick="showModal()">Menu</div>
     </div>
     <div class="container">
-        <h1>Markdown to HTML Converter</h1>
-        <form id="markdownForm" method="POST" class="{{ 'hidden' if html_code else '' }}">
-            <textarea name="markdown" placeholder="Enter your markdown here..."></textarea>
-            <div class="form-group">
-                <label for="color">Color:</label>
-                <input type="color" id="color" name="color" value="#ff0000">
-            </div>
+        <h1>HTML to Markdown Converter</h1>
+        <form id="markdownForm" method="POST" class="{{ 'hidden' if markdown_code else '' }}">
+            <textarea name="html" placeholder="Enter your html here..."></textarea>
             <button type="submit">Convert</button>
         </form>
         <div class="markdown-body">
-            <pre><code class="html">{{ html_code }}</code></pre>
+            <pre><code class="language-markdown">{{ markdown_code }}</code></pre>
         </div>
     </div>
     <button id="backButton" onclick="showForm()">Back</button>
@@ -236,8 +232,10 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.6.0/highlight.min.js"></script>
     <script>
-        hljs.highlightAll();
-        
+        document.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightBlock(block);
+        });
+
         function showModal() {
             document.getElementById('modal').classList.add('active');
             document.getElementById('modal-overlay').classList.add('active');
@@ -254,7 +252,7 @@
             document.querySelector('.markdown-body').innerHTML = '';
         }
 
-        {% if html_code %}
+        {% if markdown_code %}
         document.getElementById('backButton').style.display = 'block';
         {% endif %}
     </script>

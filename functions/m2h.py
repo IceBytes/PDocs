@@ -1,6 +1,7 @@
 import markdown
+from typing import *
 
-def markdown_parser(md_content, heading_color='#ffffff'):
+def markdown_parser(md_content: str, heading_color: Optional[str] = '#ffffff') -> str:
     css = f"""
     <style>
         body {{
