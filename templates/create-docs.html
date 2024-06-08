@@ -75,6 +75,20 @@
             z-index: 1000;
         }
 
+        .error-message {
+            background-color: #ffcccc;
+            color: #cc0000;
+            border: 1px solid #cc0000;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .error-message .close-btn {
+            float: right;
+            cursor: pointer;
+        }
+
         #backButton:hover {
             background-color: #2ea043;
         }
@@ -209,6 +223,12 @@
         <div class="site-name">Markdown tools</div>
         <div class="menu" onclick="showModal()">Menu</div>
     </div>
+    {% if error %}
+        <div class="error-message">
+            <span class="close-btn" onclick="hideError()">&times;</span>
+            {{ error }}
+        </div>
+    {% endif %}
     <div class="container">
         <h1>Create Docs for Python package</h1>
         <form id="markdownForm" method="POST" enctype="multipart/form-data" class="{{ 'hidden' if docs else '' }}">
@@ -279,6 +299,9 @@
             window.URL.revokeObjectURL(url);
         }
 
+        function hideError() {
+            document.querySelector('.error-message').style.display = 'none';
+        }
 
         {% if docs %}
         document.getElementById('backButton').style.display = 'block';
