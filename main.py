@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for, flash
 
 from functions.m2h import markdown_parser
 from functions.mv import markdown_viewer
@@ -10,6 +10,7 @@ from zipfile import ZipFile
 import shutil
 
 app = Flask(__name__)
+app.secret_key = b'__!5#y2L"Fhj@k4Q8z\n\xec]/'
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/viewer', methods=['GET', 'POST'])
@@ -39,24 +40,29 @@ def h2m():
 
 @app.route('/create-docs', methods=['GET', 'POST'])
 def create_doc():
-    docs = ""
+    docs, error = "", ""
     if request.method == 'POST':
         lib_name = request.form['lib_name']
         zip_file = request.files['dir']
-        zip_file.save(zip_file.filename) 
 
-        extract_dir = f"{lib_name}_temp"
-        os.makedirs(extract_dir, exist_ok=True)
+        if zip_file.filename.endswith('.zip'):
+            zip_filename = os.path.join('uploads', zip_file.filename)
+            zip_file.save(zip_filename)
 
-        with ZipFile(zip_file.filename, 'r') as zip_ref:
-            zip_ref.extractall(extract_dir)
+            extract_dir = os.path.join('uploads', f"{lib_name}_temp")
+            os.makedirs(extract_dir, exist_ok=True)
 
-        docs = create_docs(lib_name, extract_dir)
+            with ZipFile(zip_filename, 'r') as zip_ref:
+                zip_ref.extractall(extract_dir)
 
-        os.remove(zip_file.filename)
-        shutil.rmtree(extract_dir)
-        os.remove(f"{lib_name}_documentation.md")
+            docs = create_docs(lib_name, extract_dir)
 
-    return render_template('create-docs.html', docs=docs)
+            os.remove(zip_filename)
+            shutil.rmtree(extract_dir)
+            os.remove(f"{lib_name}_documentation.md")
+        else:
+            error = 'Please upload a zip file.'
 
-app.run(port=8767)
+    return render_template('create-docs.html', docs=docs, error=error)
+
+app.run(port=5000)
