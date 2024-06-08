@@ -208,7 +208,7 @@
             <button type="submit">Highlight</button>
         </form>
         <div class="markdown-body">
-            {{ highlighted_code|safe }}
+            <pre><code class="language-markdown">{{ highlighted_code|safe }}</code></pre>
         </div>
     </div>
     <button id="backButton" onclick="showForm()">Back</button>
