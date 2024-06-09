@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, flash
+from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
 from functions.m2h import markdown_parser
 from functions.mv import markdown_viewer
@@ -13,9 +13,9 @@ from zipfile import ZipFile, is_zipfile
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = ''
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/viewer', methods=['GET', 'POST'])
@@ -69,13 +69,12 @@ def create_doc():
                     shutil.rmtree(extract_dir, ignore_errors=True)
                     if os.path.exists(f"{lib_name}_documentation.md"):
                         os.remove(f"{lib_name}_documentation.md")
-                return render_template('create-docs.html', docs=docs)
             else:
                 os.remove(zip_filename)
                 error = 'The uploaded zip file is not safe.'
         else:
             error = 'Please upload a valid zip file.'
-    return render_template('create-docs.html',  docs=docs, error=error)
+    return render_template('create-docs.html', docs=docs, error=error)
 
 if __name__ == '__main__':
     app.run(port=5000)
