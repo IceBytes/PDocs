@@ -1,16 +1,21 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-
+from flask import Flask, render_template, request, redirect, flash
+from werkzeug.utils import secure_filename
 from functions.m2h import markdown_parser
 from functions.mv import markdown_viewer
 from functions.h2m import html_to_markdown
 from functions.create_docs import create_docs
+from functions.security import allowed_file, is_safe_file, is_safe_zip, sanitize_filename
 
 import os
-from zipfile import ZipFile
 import shutil
+from zipfile import ZipFile, is_zipfile
 
 app = Flask(__name__)
-app.secret_key = b'__!5#y2L"Fhj@k4Q8z\n\xec]/'
+app.secret_key = os.urandom(24)
+
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/viewer', methods=['GET', 'POST'])
@@ -40,29 +45,37 @@ def h2m():
 
 @app.route('/create-docs', methods=['GET', 'POST'])
 def create_doc():
-    docs, error = "", ""
+    docs, error = '', ''
     if request.method == 'POST':
-        lib_name = request.form['lib_name']
+        lib_name = sanitize_filename(request.form['lib_name'])
         zip_file = request.files['dir']
-
-        if zip_file.filename.endswith('.zip'):
-            zip_filename = os.path.join('uploads', zip_file.filename)
+        if zip_file and allowed_file(zip_file.filename):
+            filename = secure_filename(zip_file.filename)
+            zip_filename = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             zip_file.save(zip_filename)
-
-            extract_dir = os.path.join('', f"{lib_name}_temp")
-            os.makedirs(extract_dir, exist_ok=True)
-
-            with ZipFile(zip_filename, 'r') as zip_ref:
-                zip_ref.extractall(extract_dir)
-
-            docs = create_docs(lib_name, extract_dir)
-
-            os.remove(zip_filename)
-            shutil.rmtree(extract_dir)
-            os.remove(f"{lib_name}_documentation.md")
+            
+            if is_safe_file(zip_filename) and is_zipfile(zip_filename) and is_safe_zip(zip_filename):
+                extract_dir = os.path.join(app.config['UPLOAD_FOLDER'], f"{lib_name}_temp")
+                os.makedirs(extract_dir, exist_ok=True)
+                try:
+                    with ZipFile(zip_filename, 'r') as zip_ref:
+                        zip_ref.extractall(extract_dir)
+                    docs = create_docs(lib_name, extract_dir)
+                except Exception as e:
+                    docs = ''
+                    error = f"Error processing the zip file: {e}"
+                finally:
+                    os.remove(zip_filename)
+                    shutil.rmtree(extract_dir, ignore_errors=True)
+                    if os.path.exists(f"{lib_name}_documentation.md"):
+                        os.remove(f"{lib_name}_documentation.md")
+                return render_template('create-docs.html', docs=docs)
+            else:
+                os.remove(zip_filename)
+                error = 'The uploaded zip file is not safe.'
         else:
-            error = 'Please upload a zip file.'
+            error = 'Please upload a valid zip file.'
+    return render_template('create-docs.html',  docs=docs, error=error)
 
-    return render_template('create-docs.html', docs=docs, error=error)
-
-app.run(port=5000)
+if __name__ == '__main__':
+    app.run(port=5000)
